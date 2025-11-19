@@ -81,8 +81,8 @@
 
     <script type="module">
         // Global constants and variables
-        // ⚠️ API KEY IS VISIBLE IN THE BROWSER SOURCE CODE (CORS Proxy Method)
-        const API_URL = "https://api.allorigins.win/raw?url=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
+        // !!! WARNING: YOUR API KEY IS PUBLICLY EXPOSED IN THIS URL !!!
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
 
         // UI Element references
         const imageUpload = document.getElementById('imageUpload');
@@ -253,7 +253,7 @@
             const maxRetries = 5;
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    // Fetch goes to the CORS proxy URL
+                    // Direct fetch call
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -266,8 +266,7 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue; // Retry
                         }
-                        // This error means the CORS proxy or API call failed (like the 403 you saw)
-                        throw new Error(`HTTP error! status: ${response.status}. The proxy may be overloaded.`);
+                        throw new Error(`HTTP error! Status: ${response.status}. Check your API key and permissions.`);
                     }
 
                     const result = await response.json();
@@ -278,7 +277,6 @@
                         const { classification, confidence } = parseResponse(textPart);
                         displayResult(classification, confidence);
                     } else {
-                        // Check if the response failed due to Vercel/API misconfiguration
                         if (result.error) {
                             throw new Error(`API Error: ${result.error.message}`);
                         }
