@@ -81,7 +81,7 @@
 
     <script type="module">
         // Global constants and variables
-        // ⚠️ WARNING: Your API key is visible here, as this uses the simple CORS proxy method.
+        // ⚠️ API KEY IS VISIBLE IN THE BROWSER SOURCE CODE (CORS Proxy Method)
         const API_URL = "https://api.allorigins.win/raw?url=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
 
         // UI Element references
@@ -97,21 +97,6 @@
         const errorText = document.getElementById('errorText');
 
         let base64Image = null; // Stores the Base64 data of the selected image
-
-        /**
-         * Converts ArrayBuffer to Base64 string.
-         * @param {ArrayBuffer} buffer - The buffer to convert.
-         * @returns {string} The Base64 encoded string.
-         */
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary);
-        }
 
         /**
          * Handles image file selection and displays a preview.
@@ -164,12 +149,16 @@
          */
         function parseResponse(rawText) {
             const result = { classification: 'Unknown', confidence: '' };
-            const cleanText = rawText.trim().replace(/['"]+/g, ''); // Remove quotes
+            // Ensure we handle the response being inside brackets or having quotes
+            const cleanText = rawText.trim().replace(/['"\[\]]+/g, ''); 
 
-            // Look for "Hot Dog" or "Not Hot Dog"
-            if (cleanText.toLowerCase().includes('not hot dog')) {
+            // Split the text by comma and space, then look for keywords
+            const parts = cleanText.split(/, |: /);
+
+            // Try to find the classification
+            if (parts.some(p => p.trim().toLowerCase() === 'not hot dog')) {
                 result.classification = 'Not Hot Dog';
-            } else if (cleanText.toLowerCase().includes('hot dog')) {
+            } else if (parts.some(p => p.trim().toLowerCase() === 'hot dog')) {
                 result.classification = 'Hot Dog';
             }
 
@@ -191,11 +180,11 @@
             resultsArea.classList.remove('hidden');
             errorText.classList.add('hidden');
 
-            // 1. Display classification exactly once in the requested format
+            // Display classification exactly once in the requested format
             resultText.textContent = `[CLASSIFICATION: ${classification.toUpperCase()}]`;
             confidenceText.textContent = confidence;
             
-            // 2. Apply styling based on classification
+            // Apply styling based on classification
             if (classification.toLowerCase().includes('hot dog')) {
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-green-100 ring-4 ring-green-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-green-700';
@@ -234,7 +223,8 @@
             setLoading(true);
             resultsArea.classList.add('hidden'); // Hide old results
 
-            const mimeType = imageUpload.files[0].type || 'image/jpeg';
+            const file = imageUpload.files[0];
+            const mimeType = file.type || 'image/jpeg';
             
             const systemPrompt = "You are an image classification model specialized in determining if the main object in an image is a hot dog. Your response MUST strictly follow the format: [Classification: Hot Dog or Not Hot Dog], [Confidence: X% confidence]. Do not add any other text, greetings, or explanations.";
             const userQuery = "Classify the main subject of this image as 'Hot Dog' or 'Not Hot Dog' and provide the confidence score.";
@@ -276,8 +266,8 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue; // Retry
                         }
-                        // This error means the CORS proxy or API call failed
-                        throw new Error(`HTTP error! status: ${response.status}. The proxy or API may be having issues.`);
+                        // This error means the CORS proxy or API call failed (like the 403 you saw)
+                        throw new Error(`HTTP error! status: ${response.status}. The proxy may be overloaded.`);
                     }
 
                     const result = await response.json();
@@ -288,6 +278,10 @@
                         const { classification, confidence } = parseResponse(textPart);
                         displayResult(classification, confidence);
                     } else {
+                        // Check if the response failed due to Vercel/API misconfiguration
+                        if (result.error) {
+                            throw new Error(`API Error: ${result.error.message}`);
+                        }
                         throw new Error("API response was invalid or empty.");
                     }
                     
@@ -296,7 +290,7 @@
                 } catch (error) {
                     if (i === maxRetries - 1) {
                         console.error('Classification failed after multiple retries:', error);
-                        displayError(`An error occurred: ${error.message}.`);
+                        displayError(`An error occurred: ${error.message}`);
                     }
                 }
             }
