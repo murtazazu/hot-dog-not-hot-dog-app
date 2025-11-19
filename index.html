@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hot Dog / Not Hot Dog</title>
     
-    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -29,21 +29,25 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Main Container --><div class="w-full max-w-lg bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-6">
+    <!-- Main Container -->
+    <div class="w-full max-w-lg bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-6">
 
-        <!-- Header --><header class="text-center">
+        <!-- Header -->
+        <header class="text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
                 Hot Dog <span class="text-red-600">/</span> Not Hot Dog
             </h1>
             <p class="text-md text-gray-500 mt-2">The future of image classification is here.</p>
         </header>
 
-        <!-- Image Preview Area --><div id="imagePreviewContainer" class="relative w-full h-64 border-4 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+        <!-- Image Preview Area -->
+        <div id="imagePreviewContainer" class="relative w-full h-64 border-4 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
             <img id="previewImage" class="hidden w-full h-full object-cover" alt="Image preview">
             <p id="placeholderText" class="text-gray-500 italic">Select an image to begin...</p>
         </div>
 
-        <!-- File Input and Action Button --><div class="flex flex-col space-y-4">
+        <!-- File Input and Action Button -->
+        <div class="flex flex-col space-y-4">
             <label for="imageUpload" class="block text-sm font-medium text-gray-700">Upload your hot dog (or not hot dog):</label>
             <input type="file" id="imageUpload" accept="image/*" class="w-full text-sm text-gray-500
                 file:mr-4 file:py-2 file:px-4
@@ -61,7 +65,8 @@
             </button>
         </div>
 
-        <!-- Results Display Area --><div id="resultsArea" class="min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 hidden">
+        <!-- Results Display Area -->
+        <div id="resultsArea" class="min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 hidden">
             <p id="resultText" class="text-3xl font-extrabold"></p>
             <p id="confidenceText" class="text-xl font-semibold mt-2 text-gray-700"></p>
             <p id="errorText" class="text-red-500 font-medium mt-2 hidden"></p>
@@ -69,10 +74,15 @@
 
     </div>
 
+    <!-- New Footer/Copyright Notice -->
+    <footer class="mt-8 text-center text-sm text-gray-500">
+        <p>© Copyrighted by A&Ds 🌭😂</p>
+    </footer>
+
     <script type="module">
         // Global constants and variables
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-        const apiKey = "AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; // YOUR API KEY IS INSERTED HERE
+        // Points to the secure Vercel endpoint (requires Vercel deployment setup)
+        const API_URL = "/api/classify"; 
 
         // UI Element references
         const imageUpload = document.getElementById('imageUpload');
@@ -177,11 +187,10 @@
          * @param {string} classification - "Hot Dog" or "Not Hot Dog".
          * @param {string} confidence - The confidence percentage string.
          */
-        window.displayResult = function(classification, confidence) { // Made global for potential external calls
+        window.displayResult = function(classification, confidence) { 
             resultsArea.classList.remove('hidden');
             errorText.classList.add('hidden');
 
-            // Set the result text to the exact bracketed format requested, ensure it's not nested
             resultText.textContent = `[CLASSIFICATION: ${classification.toUpperCase()}]`;
             confidenceText.textContent = confidence;
             
@@ -190,11 +199,9 @@
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-green-100 ring-4 ring-green-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-green-700';
             } else if (classification.toLowerCase().includes('not hot dog')) {
-                // Apply the bold red styling for "Not Hot Dog"
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-red-100 ring-4 ring-red-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-red-700';
             } else {
-                 // Unknown/Fallback state
                  resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-gray-100 ring-4 ring-gray-500';
                  resultText.className = 'text-3xl md:text-5xl font-extrabold text-gray-700';
             }
@@ -204,7 +211,7 @@
          * Displays an error message.
          * @param {string} message - The error message.
          */
-        window.displayError = function(message) { // Made global for potential external calls
+        window.displayError = function(message) { 
             resultsArea.classList.remove('hidden');
             resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center bg-yellow-100 ring-4 ring-yellow-500';
             resultText.textContent = 'CLASSIFICATION FAILED';
@@ -222,11 +229,7 @@
                 displayError("No image selected for classification.");
                 return;
             }
-            if (!apiKey) {
-                displayError("API Key is missing from the code! Please insert your key to proceed.");
-                return;
-            }
-
+            
             setLoading(true);
             resultsArea.classList.add('hidden'); // Hide old results
 
@@ -259,8 +262,8 @@
             const maxRetries = 5;
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    const fullUrl = API_URL + apiKey;
-                    const response = await fetch(fullUrl, {
+                    // Fetch goes to the Vercel proxy, which adds the hidden API key
+                    const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -272,10 +275,8 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue; // Retry
                         }
-                        if (response.status === 403) {
-                             throw new Error(`HTTP error! status: 403. The API key may be invalid or restricted.`);
-                        }
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        // This error means the Vercel proxy failed or the API call failed
+                        throw new Error(`HTTP error! status: ${response.status}. Deployment may be incomplete or API Key is missing on Vercel.`);
                     }
 
                     const result = await response.json();
@@ -305,5 +306,4 @@
     </script>
 </body>
 </html>
-
 
