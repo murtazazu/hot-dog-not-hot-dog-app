@@ -74,15 +74,15 @@
 
     </div>
 
-    <!-- New Footer/Copyright Notice -->
+    <!-- Copyright Notice Footer -->
     <footer class="mt-8 text-center text-sm text-gray-500">
         <p>© Copyrighted by A&Ds 🌭😂</p>
     </footer>
 
     <script type="module">
         // Global constants and variables
-        // Points to the secure Vercel endpoint (requires Vercel deployment setup)
-        const API_URL = "/api/classify"; 
+        // ⚠️ WARNING: Your API key is visible here, as this uses the simple CORS proxy method.
+        const API_URL = "https://api.allorigins.win/raw?url=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
 
         // UI Element references
         const imageUpload = document.getElementById('imageUpload');
@@ -191,10 +191,11 @@
             resultsArea.classList.remove('hidden');
             errorText.classList.add('hidden');
 
+            // 1. Display classification exactly once in the requested format
             resultText.textContent = `[CLASSIFICATION: ${classification.toUpperCase()}]`;
             confidenceText.textContent = confidence;
             
-            // Apply styling based on classification
+            // 2. Apply styling based on classification
             if (classification.toLowerCase().includes('hot dog')) {
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-green-100 ring-4 ring-green-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-green-700';
@@ -262,7 +263,7 @@
             const maxRetries = 5;
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    // Fetch goes to the Vercel proxy, which adds the hidden API key
+                    // Fetch goes to the CORS proxy URL
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -275,8 +276,8 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue; // Retry
                         }
-                        // This error means the Vercel proxy failed or the API call failed
-                        throw new Error(`HTTP error! status: ${response.status}. Deployment may be incomplete or API Key is missing on Vercel.`);
+                        // This error means the CORS proxy or API call failed
+                        throw new Error(`HTTP error! status: ${response.status}. The proxy or API may be having issues.`);
                     }
 
                     const result = await response.json();
