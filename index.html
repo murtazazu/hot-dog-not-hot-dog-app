@@ -81,7 +81,7 @@
 
     <script type="module">
         // Global constants and variables
-        // !!! WARNING: YOUR API KEY IS PUBLICLY EXPOSED IN THIS URL !!!
+        // WARNING: The API key below is public and should be replaced with an environment variable in a production application.
         const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
 
         // UI Element references
@@ -143,32 +143,37 @@
         }
 
         /**
-         * Cleans and parses the model's raw text response.
+         * Cleans and parses the model's raw text response using RegEx for strict format adherence.
+         * Now includes a robust fallback for confidence extraction.
          * @param {string} rawText - The text response from the Gemini API.
          * @returns {{classification: string, confidence: string}}
          */
         function parseResponse(rawText) {
-            const result = { classification: 'Unknown', confidence: '' };
-            // Ensure we handle the response being inside brackets or having quotes
-            const cleanText = rawText.trim().replace(/['"\[\]]+/g, ''); 
-
-            // Split the text by comma and space, then look for keywords
-            const parts = cleanText.split(/, |: /);
-
-            // Try to find the classification
-            if (parts.some(p => p.trim().toLowerCase() === 'not hot dog')) {
-                result.classification = 'Not Hot Dog';
-            } else if (parts.some(p => p.trim().toLowerCase() === 'hot dog')) {
-                result.classification = 'Hot Dog';
+            let classification = 'Unknown';
+            let confidence = 'N/A';
+            
+            // 1. Strict Classification Extraction
+            const classificationMatch = rawText.match(/\[Classification:\s*(.*?)\s*\]/i);
+            if (classificationMatch && classificationMatch[1]) {
+                classification = classificationMatch[1].trim();
             }
-
-            // Look for confidence percentage
-            const percentMatch = cleanText.match(/(\d+\.?\d*)\s*%/);
-            if (percentMatch && percentMatch[0]) {
-                result.confidence = percentMatch[0] + ' confidence';
+            
+            // 2. Strict Confidence Extraction (looking for the text inside the brackets)
+            const strictConfidenceMatch = rawText.match(/\[Confidence:\s*(.*?)\s*\]/i); 
+            
+            if (strictConfidenceMatch && strictConfidenceMatch[1]) {
+                // Success: Capture group 1 contains the percentage and 'confidence', e.g., "98% confidence"
+                confidence = strictConfidenceMatch[1].trim(); 
+            } else {
+                // 3. Fallback: If strict format fails, try to find any percentage value
+                const fallbackPercentageMatch = rawText.match(/(\d+\.?\d*\s*%)/);
+                if (fallbackPercentageMatch && fallbackPercentageMatch[1]) {
+                    // Reconstruct the full string for display
+                    confidence = `${fallbackPercentageMatch[1].trim()} confidence (Parsed)`;
+                }
             }
-
-            return result;
+            
+            return { classification, confidence };
         }
 
         /**
@@ -180,21 +185,28 @@
             resultsArea.classList.remove('hidden');
             errorText.classList.add('hidden');
 
-            // Display classification exactly once in the requested format
-            resultText.textContent = `[CLASSIFICATION: ${classification.toUpperCase()}]`;
-            confidenceText.textContent = confidence;
+            let emoji = ''; // Variable to hold the emoji
             
-            // Apply styling based on classification
-            if (classification.toLowerCase().includes('hot dog')) {
+            // Apply styling based on classification. 
+            if (classification.toLowerCase().includes('hot dog') && !classification.toLowerCase().includes('not hot dog')) {
+                // ONLY Hot Dog
+                emoji = '✅ '; // Check mark for Hot Dog
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-green-100 ring-4 ring-green-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-green-700';
             } else if (classification.toLowerCase().includes('not hot dog')) {
+                // Not Hot Dog
+                emoji = '❌ '; // Cross mark for Not Hot Dog
                 resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-red-100 ring-4 ring-red-500';
                 resultText.className = 'text-3xl md:text-5xl font-extrabold text-red-700';
             } else {
+                 emoji = '❓ '; // Question mark for unknown
                  resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 bg-gray-100 ring-4 ring-gray-500';
                  resultText.className = 'text-3xl md:text-5xl font-extrabold text-gray-700';
             }
+            
+            // Display classification with the prepended emoji
+            resultText.textContent = `${emoji}[CLASSIFICATION: ${classification.toUpperCase()}]`;
+            confidenceText.textContent = confidence;
         }
 
         /**
@@ -204,7 +216,7 @@
         window.displayError = function(message) { 
             resultsArea.classList.remove('hidden');
             resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center bg-yellow-100 ring-4 ring-yellow-500';
-            resultText.textContent = 'CLASSIFICATION FAILED';
+            resultText.textContent = '🛑 CLASSIFICATION FAILED';
             confidenceText.textContent = 'Please try another image.';
             errorText.textContent = message;
             errorText.classList.remove('hidden');
