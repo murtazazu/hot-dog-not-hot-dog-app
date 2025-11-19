@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hot Dog / Not Hot Dog</title>
     
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -30,25 +29,21 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Main Container -->
-    <div class="w-full max-w-lg bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-6">
+    <!-- Main Container --><div class="w-full max-w-lg bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-6">
 
-        <!-- Header -->
-        <header class="text-center">
+        <!-- Header --><header class="text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
                 Hot Dog <span class="text-red-600">/</span> Not Hot Dog
             </h1>
             <p class="text-md text-gray-500 mt-2">The future of image classification is here.</p>
         </header>
 
-        <!-- Image Preview Area -->
-        <div id="imagePreviewContainer" class="relative w-full h-64 border-4 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+        <!-- Image Preview Area --><div id="imagePreviewContainer" class="relative w-full h-64 border-4 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
             <img id="previewImage" class="hidden w-full h-full object-cover" alt="Image preview">
             <p id="placeholderText" class="text-gray-500 italic">Select an image to begin...</p>
         </div>
 
-        <!-- File Input and Action Button -->
-        <div class="flex flex-col space-y-4">
+        <!-- File Input and Action Button --><div class="flex flex-col space-y-4">
             <label for="imageUpload" class="block text-sm font-medium text-gray-700">Upload your hot dog (or not hot dog):</label>
             <input type="file" id="imageUpload" accept="image/*" class="w-full text-sm text-gray-500
                 file:mr-4 file:py-2 file:px-4
@@ -66,8 +61,7 @@
             </button>
         </div>
 
-        <!-- Results Display Area -->
-        <div id="resultsArea" class="min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 hidden">
+        <!-- Results Display Area --><div id="resultsArea" class="min-h-[6rem] p-4 rounded-lg text-center transition-all duration-300 hidden">
             <p id="resultText" class="text-3xl font-extrabold"></p>
             <p id="confidenceText" class="text-xl font-semibold mt-2 text-gray-700"></p>
             <p id="errorText" class="text-red-500 font-medium mt-2 hidden"></p>
@@ -78,8 +72,7 @@
     <script type="module">
         // Global constants and variables
         const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-        // YOUR API KEY IS INSERTED HERE
-        const apiKey = "AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; 
+        const apiKey = "AIzaSyCSPyinLoN03us7_LmxblNrX0wV9QMuXOQ"; // YOUR API KEY IS INSERTED HERE
 
         // UI Element references
         const imageUpload = document.getElementById('imageUpload');
@@ -163,31 +156,17 @@
             const result = { classification: 'Unknown', confidence: '' };
             const cleanText = rawText.trim().replace(/['"]+/g, ''); // Remove quotes
 
-            const parts = cleanText.split(/,\s*/);
-            
-            if (parts.length >= 2) {
-                // Attempt to parse "Hot Dog" / "Not Hot Dog"
-                if (parts[0].toLowerCase().includes('hot dog') || parts[0].toLowerCase().includes('not hot dog')) {
-                    result.classification = parts[0].trim();
-                }
-                
-                // Attempt to parse confidence
-                const confidenceMatch = parts.find(p => p.toLowerCase().includes('% confidence'));
-                if (confidenceMatch) {
-                    result.confidence = confidenceMatch.trim();
-                }
-            } else {
-                 // Fallback parsing if the strict format was slightly deviated
-                 if (cleanText.toLowerCase().includes('not hot dog')) {
-                    result.classification = 'Not Hot Dog';
-                } else if (cleanText.toLowerCase().includes('hot dog')) {
-                    result.classification = 'Hot Dog';
-                }
+            // Look for "Hot Dog" or "Not Hot Dog"
+            if (cleanText.toLowerCase().includes('not hot dog')) {
+                result.classification = 'Not Hot Dog';
+            } else if (cleanText.toLowerCase().includes('hot dog')) {
+                result.classification = 'Hot Dog';
+            }
 
-                const percentMatch = cleanText.match(/(\d+\.?\d*)\s*%/);
-                if (percentMatch && percentMatch[0]) {
-                    result.confidence = percentMatch[0] + ' confidence';
-                }
+            // Look for confidence percentage
+            const percentMatch = cleanText.match(/(\d+\.?\d*)\s*%/);
+            if (percentMatch && percentMatch[0]) {
+                result.confidence = percentMatch[0] + ' confidence';
             }
 
             return result;
@@ -198,11 +177,11 @@
          * @param {string} classification - "Hot Dog" or "Not Hot Dog".
          * @param {string} confidence - The confidence percentage string.
          */
-        function displayResult(classification, confidence) {
+        window.displayResult = function(classification, confidence) { // Made global for potential external calls
             resultsArea.classList.remove('hidden');
             errorText.classList.add('hidden');
 
-            // Set the result text to the exact bracketed format requested
+            // Set the result text to the exact bracketed format requested, ensure it's not nested
             resultText.textContent = `[CLASSIFICATION: ${classification.toUpperCase()}]`;
             confidenceText.textContent = confidence;
             
@@ -225,9 +204,8 @@
          * Displays an error message.
          * @param {string} message - The error message.
          */
-        function displayError(message) {
+        window.displayError = function(message) { // Made global for potential external calls
             resultsArea.classList.remove('hidden');
-            // The 403 error is specific to the API key, so we highlight it in a friendly yellow error box.
             resultsArea.className = 'min-h-[6rem] p-4 rounded-lg text-center bg-yellow-100 ring-4 ring-yellow-500';
             resultText.textContent = 'CLASSIFICATION FAILED';
             confidenceText.textContent = 'Please try another image.';
@@ -294,7 +272,6 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue; // Retry
                         }
-                        // Specifically check for 403 (Forbidden)
                         if (response.status === 403) {
                              throw new Error(`HTTP error! status: 403. The API key may be invalid or restricted.`);
                         }
